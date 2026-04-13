@@ -969,7 +969,8 @@ function sendWhatsApp(){
     '_Saludos cordiales,_\n' +
     '_' + asesorFmt + '_';
 
-  window.open('https://web.whatsapp.com/send?phone=51' + phone + '&text=' + encodeURIComponent(msg), '_blank');
+  // Mismo nombre de ventana: reutiliza la pestaña que abrió este botón (no puede unirse a WhatsApp abierto a mano).
+  window.open('https://web.whatsapp.com/send?phone=51' + phone + '&text=' + encodeURIComponent(msg), 'BBVASimWhatsApp');
 }
 
 $('simBtn').addEventListener('click', simulate);
