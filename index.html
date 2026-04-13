@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Simulador Préstamo Comercial</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --navy:#04213f;
+  --blue:#004481;
+  --blue-mid:#1464a5;
+  --blue-light:#3b82c4;
+  --sky:#e8f2fc;
+  --gold:#e8b900;
+  --gold-light:#fff8dc;
+  --bg:#f0f4f9;
+  --surface:#ffffff;
+  --border:#d8e4f0;
+  --text:#04213f;
+  --text-2:#3a587a;
+  --text-3:#7a95b0;
+  --green:#0a7a4a;
+  --green-bg:#e5f5ed;
+  --r:14px;
+  --r-sm:10px;
+  --shadow:0 4px 24px rgba(4,33,63,.10);
+  --shadow-lg:0 8px 40px rgba(4,33,63,.15);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased}
+
+/* ── HEADER ── */
+header{
+  background:var(--navy);
+  height:72px;
+  display:flex;align-items:center;
+  padding:0 40px;
+  gap:0;
+  position:sticky;top:0;z-index:200;
+}
+.logo-area{display:flex;align-items:center;gap:18px}
+/* BBVA logo SVG blanco oficial */
+.bbva-logo{
+  height:22px;
+  width:auto;
+}
+.hd{width:1.5px;height:36px;background:rgba(255,255,255,.18);margin:0 20px}
+.header-chip{
+  background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.14);
+  border-radius:100px;
+  padding:5px 14px;
+  font-size:11.5px;
+  font-weight:600;
+  color:rgba(255,255,255,.7);
+  letter-spacing:.5px;
+}
+.header-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.badge-live{
+  display:flex;align-items:center;gap:6px;
+  font-size:11px;font-weight:600;
+  color:rgba(255,255,255,.5);
+  letter-spacing:.4px;
+}
+.dot-live{width:7px;height:7px;border-radius:50%;background:#3dcf82;box-shadow:0 0 0 2px rgba(61,207,130,.25);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+
+/* ── LAYOUT ── */
+.shell{display:grid;grid-template-columns:400px 1fr;min-height:calc(100vh - 72px)}
+
+/* ── LEFT PANEL ── */
+.lp{
+  background:var(--surface);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  position:sticky;top:72px;
+  height:calc(100vh - 72px);
+  overflow-y:auto;
+}
+.form-scroll{padding:16px 24px;flex:0 0 auto}
+.section-label{
+  font-size:10px;font-weight:700;
+  letter-spacing:2px;text-transform:uppercase;
+  color:var(--text-3);
+  margin-bottom:8px;margin-top:14px;
+  display:flex;align-items:center;gap:8px;
+}
+.section-label:first-child{margin-top:0}
+.section-label::after{content:'';flex:1;height:1px;background:var(--border)}
+
+.field{margin-bottom:8px}
+.field label{
+  display:block;font-size:11px;font-weight:600;
+  color:var(--text-2);margin-bottom:4px;
+}
+.input-wrap{position:relative}
+.input-pfx{
+  position:absolute;left:12px;top:50%;transform:translateY(-50%);
+  font-size:12px;font-weight:700;color:var(--text-3);
+  pointer-events:none;
+}
+.input-sfx{
+  position:absolute;right:12px;top:50%;transform:translateY(-50%);
+  font-size:12px;font-weight:700;color:var(--text-3);
+  pointer-events:none;
+}
+.input-wrap input,
+.input-wrap select{
+  width:100%;height:38px;
+  border:1.5px solid var(--border);
+  border-radius:var(--r-sm);
+  font-family:'Outfit',sans-serif;
+  font-size:13px;font-weight:500;
+  color:var(--text);background:var(--surface);
+  outline:none;
+  transition:border-color .18s,box-shadow .18s,background .18s;
+  -webkit-appearance:none;appearance:none;
+}
+.input-wrap input{text-align:center;padding:0 12px}
+.input-wrap input.has-pfx{padding-left:28px}
+.input-wrap select{padding:0 32px 0 12px;cursor:pointer}
+.input-wrap input:focus,
+.input-wrap select:focus{
+  border-color:var(--blue);
+  box-shadow:0 0 0 3px rgba(0,68,129,.10);
+  background:#fafcff;
+}
+.input-wrap input::placeholder{color:var(--text-3);font-weight:400}
+.select-arrow{
+  position:absolute;right:10px;top:50%;transform:translateY(-50%);
+  pointer-events:none;color:var(--text-3);
+}
+.select-arrow svg{width:14px;height:14px;display:block}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+.lp-footer{padding:12px 24px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:8px}
+.btn-sim{
+  width:100%;height:42px;
+  background:linear-gradient(135deg,var(--blue),var(--blue-mid));
+  color:white;border:none;border-radius:var(--r-sm);
+  font-family:'Outfit',sans-serif;font-size:14px;font-weight:700;
+  cursor:pointer;letter-spacing:.3px;
+  transition:all .18s;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  box-shadow:0 4px 16px rgba(0,68,129,.3);
+}
+.btn-sim:hover{transform:translateY(-1px);box-shadow:0 6px 22px rgba(0,68,129,.38)}
+.btn-sim:active{transform:translateY(0)}
+.btn-sim svg{width:17px;height:17px;fill:none;stroke:white;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.btn-rst{
+  width:100%;height:34px;
+  background:transparent;color:var(--text-3);
+  border:1.5px solid var(--border);border-radius:var(--r-sm);
+  font-family:'Outfit',sans-serif;font-size:12px;font-weight:500;
+  cursor:pointer;transition:all .18s;
+}
+.btn-rst:hover{border-color:var(--text-2);color:var(--text-2)}
+.formula-note{font-size:9.5px;color:var(--text-3);line-height:1.5;margin-top:0}
+
+/* WhatsApp */
+.wa-section{margin-bottom:0}
+.wa-label-row{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--text-2);margin-bottom:4px}
+.wa-prefix-wrap{display:flex;align-items:center;gap:8px}
+.wa-prefix{
+  height:38px;padding:0 10px;
+  border:1.5px solid var(--border);border-radius:var(--r-sm);
+  background:#f7fafd;
+  font-family:'Outfit',sans-serif;font-size:12px;font-weight:600;
+  color:var(--text-2);white-space:nowrap;
+  display:flex;align-items:center;gap:5px;flex-shrink:0;
+}
+.wa-input{
+  flex:1;height:38px;
+  border:1.5px solid var(--border);border-radius:var(--r-sm);
+  font-family:'Outfit',sans-serif;font-size:13px;font-weight:500;
+  color:var(--text);background:var(--surface);
+  outline:none;padding:0 12px;
+  transition:border-color .18s,box-shadow .18s;
+  -webkit-appearance:none;appearance:none;
+  width:100%;
+}
+.wa-input:focus{border-color:#25d366;box-shadow:0 0 0 3px rgba(37,211,102,.10)}
+.wa-input::placeholder{color:var(--text-3);font-weight:400}
+.wa-emp-toggle{margin-bottom:10px;padding:8px 10px}
+.wa-emp-toggle .dsg-label{font-size:11px}
+.wa-emp-toggle .dsg-sub{font-size:9.5px}
+.btn-wa{
+  width:100%;height:42px;
+  background:linear-gradient(135deg,#25d366,#1da851);
+  color:white;border:none;border-radius:var(--r-sm);
+  font-family:'Outfit',sans-serif;font-size:14px;font-weight:700;
+  cursor:pointer;letter-spacing:.3px;
+  transition:all .18s;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  box-shadow:0 4px 16px rgba(37,211,102,.3);
+}
+.btn-wa:hover{transform:translateY(-1px);box-shadow:0 6px 22px rgba(37,211,102,.4)}
+.btn-wa:active{transform:translateY(0)}
+.btn-wa svg{width:17px;height:17px;fill:white}
+.btn-wa:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
+
+.dsg-toggle{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 12px;
+  border:1.5px solid var(--border);
+  border-radius:var(--r-sm);
+  cursor:pointer;
+  transition:all .18s;
+  user-select:none;
+  background:white;
+}
+.dsg-toggle:hover{border-color:var(--blue);background:#fafcff}
+.dsg-toggle.active{border-color:var(--blue);background:#f0f7ff}
+.dsg-check{
+  width:18px;height:18px;flex-shrink:0;
+  border-radius:5px;
+  border:2px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  transition:all .18s;
+  background:white;
+}
+.dsg-toggle.active .dsg-check{background:var(--blue);border-color:var(--blue)}
+.dsg-info{flex:1}
+.dsg-label{display:block;font-size:12px;font-weight:700;color:var(--text);margin-bottom:1px}
+.dsg-sub{display:block;font-size:10px;color:var(--text-3);font-weight:400}
+.dsg-badge{
+  font-size:10px;font-weight:700;
+  padding:2px 8px;border-radius:100px;
+  white-space:nowrap;
+  background:#f0f4f9;color:var(--text-3);
+  transition:all .18s;
+}
+.dsg-toggle.active .dsg-badge{background:#e0f0ff;color:var(--blue)}
+
+/* ── RIGHT PANEL ── */
+.rp{display:flex;flex-direction:column;overflow:hidden}
+
+/* HERO RESULT */
+.result-hero{
+  background:linear-gradient(160deg,var(--navy) 0%,var(--blue) 60%,var(--blue-mid) 100%);
+  padding:44px 52px;
+  position:relative;overflow:hidden;
+}
+.result-hero::before{
+  content:'';position:absolute;
+  top:-80px;right:-80px;
+  width:340px;height:340px;border-radius:50%;
+  background:radial-gradient(circle,rgba(255,255,255,.07) 0%,transparent 65%);
+}
+.result-hero::after{
+  content:'';position:absolute;
+  bottom:-60px;left:160px;
+  width:220px;height:220px;border-radius:50%;
+  background:radial-gradient(circle,rgba(59,130,196,.15) 0%,transparent 70%);
+}
+.rh-label{
+  font-size:11px;font-weight:700;letter-spacing:2.5px;
+  text-transform:uppercase;color:rgba(255,255,255,.5);
+  margin-bottom:10px;position:relative;z-index:1;
+}
+.rh-cuota{
+  display:flex;align-items:baseline;gap:8px;
+  margin-bottom:36px;position:relative;z-index:1;
+}
+.rh-sym{font-size:26px;font-weight:700;color:rgba(255,255,255,.7)}
+.rh-amt{font-size:70px;font-weight:800;color:white;line-height:1;letter-spacing:-2px}
+.rh-freq{font-size:14px;color:rgba(255,255,255,.45);font-weight:400;align-self:flex-end;margin-bottom:10px}
+.rh-tag{
+  display:inline-flex;align-items:center;gap:6px;
+  background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);
+  border-radius:100px;padding:4px 12px;
+  font-size:11.5px;font-weight:600;color:rgba(255,255,255,.7);
+  margin-bottom:32px;position:relative;z-index:1;
+}
+
+.stat-grid{
+  display:grid;grid-template-columns:repeat(4,1fr);
+  gap:12px;position:relative;z-index:1;
+}
+.stat-card{
+  background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:var(--r);padding:18px 20px;
+  transition:background .2s;
+}
+.stat-card:hover{background:rgba(255,255,255,.12)}
+.stat-k{font-size:11px;color:rgba(255,255,255,.5);font-weight:600;letter-spacing:.3px;margin-bottom:7px}
+.stat-v{font-size:20px;font-weight:700;color:white;letter-spacing:-.3px}
+.stat-v.accent{color:var(--gold)}
+
+/* SUMMARY STRIP */
+.summary-strip{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  background:white;
+  border-bottom:1px solid var(--border);
+}
+.sum-item{
+  padding:24px 36px;
+  border-right:1px solid var(--border);
+  display:flex;align-items:center;gap:14px;
+}
+.sum-item:last-child{border-right:none}
+.sum-icon{
+  width:44px;height:44px;border-radius:12px;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+}
+.si-blue{background:var(--sky)}.si-gold{background:var(--gold-light)}.si-navy{background:#e8edf5}
+.sum-icon svg{width:22px;height:22px}
+.sum-k{font-size:12px;color:var(--text-3);font-weight:500;margin-bottom:4px}
+.sum-v{font-size:22px;font-weight:700;color:var(--text);letter-spacing:-.5px}
+
+/* TABLE AREA */
+.table-wrap{flex:1;overflow-y:auto;background:var(--bg)}
+.table-header{
+  padding:18px 36px 14px;
+  display:flex;align-items:center;justify-content:space-between;
+  background:white;border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:10;
+}
+.table-title{font-size:14px;font-weight:700;color:var(--text)}
+.table-sub{font-size:12px;color:var(--text-3);font-weight:400}
+
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{
+  padding:12px 16px;
+  font-size:10.5px;font-weight:700;
+  letter-spacing:.8px;text-transform:uppercase;
+  color:var(--text-3);text-align:center;
+  white-space:nowrap;background:#f7fafd;
+  border-bottom:2px solid var(--border);
+}
+thead th:first-child{text-align:center;padding-left:36px;width:52px}
+tbody td{
+  padding:14px 16px;
+  border-bottom:1px solid #eef3f9;
+  text-align:center;
+  color:var(--text-2);font-weight:500;
+  white-space:nowrap;
+}
+tbody td:first-child{
+  text-align:center;padding-left:36px;
+  font-size:12px;color:var(--text-3);font-weight:700;
+}
+tbody td:nth-child(2){text-align:center;color:var(--text-2);font-weight:600}
+td.t-total{font-weight:700;color:var(--text)}
+td.t-int{color:#9a7010;font-weight:600}
+td.t-bal{color:var(--blue);font-weight:700}
+tbody tr{transition:background .1s}
+tbody tr:hover{background:#f0f6ff}
+tbody tr:last-child td{border-bottom:none;background:rgba(0,68,129,.03)}
+.final-pill{
+  display:inline-flex;align-items:center;
+  background:var(--green-bg);color:var(--green);
+  border-radius:100px;padding:2px 9px;
+  font-size:10px;font-weight:700;
+  margin-left:8px;letter-spacing:.4px;text-transform:uppercase;
+}
+.null-cell{color:var(--border);font-weight:400;font-size:15px}
+
+.disclaimer{
+  padding:18px 36px;
+  background:white;border-top:1px solid var(--border);
+  display:flex;gap:12px;align-items:flex-start;
+}
+.disclaimer svg{width:16px;height:16px;flex-shrink:0;margin-top:2px;fill:var(--text-3)}
+.disclaimer p{font-size:11px;color:var(--text-3);line-height:1.65}
+
+/* EMPTY STATE */
+.empty{
+  flex:1;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:80px 40px;text-align:center;
+}
+.empty-icon-wrap{
+  width:72px;height:72px;
+  background:linear-gradient(135deg,var(--sky),#dbeeff);
+  border-radius:20px;
+  display:flex;align-items:center;justify-content:center;
+  margin-bottom:20px;
+  box-shadow:0 4px 16px rgba(0,68,129,.12);
+}
+.empty-icon-wrap svg{width:34px;height:34px;stroke:var(--blue);fill:none;stroke-width:1.5;stroke-linecap:round}
+.empty h2{font-size:22px;font-weight:700;color:var(--text-2);margin-bottom:10px}
+.empty p{font-size:14px;color:var(--text-3);max-width:300px;line-height:1.65;font-weight:400}
+
+/* ANIMATIONS */
+@keyframes slideUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.anim{animation:slideUp .3s ease forwards}
+.anim-d1{animation-delay:.05s;opacity:0}
+.anim-d2{animation-delay:.1s;opacity:0}
+.anim-d3{animation-delay:.15s;opacity:0}
+
+/* ── RESPONSIVE ── */
+@media(max-width:1150px){
+  .shell{grid-template-columns:1fr}
+  .lp{position:static;height:auto}
+  .stat-grid{grid-template-columns:repeat(2,1fr)}
+  .rh-amt{font-size:52px}
+  .summary-strip{grid-template-columns:1fr}
+  .sum-item{border-right:none;border-bottom:1px solid var(--border)}
+}
+@media(max-width:640px){
+  header{padding:0 20px}
+  .result-hero{padding:28px 24px}
+  .form-scroll{padding:20px}
+  .lp-hero{padding:22px 20px}
+  .lp-footer{padding:16px 20px}
+  .table-header{padding:14px 20px 10px}
+  thead th:first-child{padding-left:20px}
+  tbody td:first-child{padding-left:20px}
+  .sum-item{padding:18px 20px}
+  .disclaimer{padding:14px 20px}
+  table{display:block;overflow-x:auto}
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo-area">
+   <img src="logo_bbva_blanco.png" alt="BBVA" class="bbva-logo">
+    <div class="hd"></div>
+    <div class="header-chip">Simulador Préstamo Comercial</div>
+  </div>
+  <div class="header-right">
+    <div class="badge-live">
+      <span class="dot-live"></span>
+      Motor activo
+    </div>
+  </div>
+</header>
+
+<div class="shell">
+
+  <!-- ── LEFT PANEL ── -->
+  <aside class="lp">
+    <div class="form-scroll">
+      <div class="section-label">Condiciones del préstamo</div>
+
+      <div class="field">
+        <label>Monto solicitado</label>
+        <div class="input-wrap">
+          <span class="input-pfx">S/</span>
+          <input id="amount" type="text" inputmode="decimal" class="has-pfx" placeholder="200,000"/>
+        </div>
+      </div>
+
+      <div class="row2">
+        <div class="field">
+          <label>Tasa anual (TEA)</label>
+          <div class="input-wrap">
+            <input id="tea" type="number" class="has-sfx" min="0.01" max="99" step="0.01" placeholder="12.00"/>
+            <span class="input-sfx">%</span>
+          </div>
+        </div>
+        <div class="field">
+          <label>Plazo en meses</label>
+          <div class="input-wrap">
+            <input id="months" type="number" min="1" max="180" step="1" placeholder="24"/>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-label">Calendario de pagos</div>
+
+      <div class="row2">
+        <div class="field">
+          <label>Fecha de solicitud</label>
+          <div class="input-wrap">
+            <input id="appDate" type="date"/>
+          </div>
+        </div>
+        <div class="field">
+          <label>Día de pago mensual</label>
+          <div class="input-wrap">
+            <input id="dueDay" type="number" min="1" max="31"/>
+          </div>
+        </div>
+      </div>
+
+      <!-- Seguro de Desgravamen -->
+      <div class="field">
+        <div class="dsg-toggle" id="dsgToggle" onclick="toggleDsg()">
+          <div class="dsg-check" id="dsgCheck">
+            <svg id="dsgCheckIcon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="display:none"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div class="dsg-info">
+            <span class="dsg-label">Seguro de Desgravamen</span>
+            <span class="dsg-sub">0.069% mensual sobre saldo · obligatorio en Microempresa</span>
+          </div>
+          <span class="dsg-badge" id="dsgBadge">Inactivo</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="lp-footer">
+      <button class="btn-sim" id="simBtn" type="button">
+        <svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        Calcular cronograma
+      </button>
+
+      <!-- WhatsApp -->
+      <div class="wa-section">
+        <div class="wa-label-row">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Nombre del cliente
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:10px">
+          <div style="display:flex;border:1.5px solid var(--border);border-radius:var(--r-sm);overflow:hidden;flex-shrink:0">
+            <button type="button" id="genM" onclick="setGen('M')" style="height:48px;padding:0 14px;border:none;font-family:Outfit,sans-serif;font-size:13px;font-weight:700;cursor:pointer;background:var(--blue);color:white;transition:all .18s">Sr.</button>
+            <button type="button" id="genF" onclick="setGen('F')" style="height:48px;padding:0 14px;border:none;font-family:Outfit,sans-serif;font-size:13px;font-weight:700;cursor:pointer;background:white;color:var(--text-3);transition:all .18s">Sra.</button>
+          </div>
+          <input id="waClientName" class="wa-input" type="text" placeholder="Ej: Carlos Ramirez"/>
+        </div>
+
+        <div class="dsg-toggle wa-emp-toggle" id="waEmpToggle" onclick="toggleWaEmp()">
+          <div class="dsg-check" id="waEmpCheck">
+            <svg id="waEmpCheckIcon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="display:none"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div class="dsg-info">
+            <span class="dsg-label">Es empresa</span>
+            <span class="dsg-sub">Incluye el nombre de la empresa en el mensaje (negrita en WhatsApp)</span>
+          </div>
+        </div>
+        <div id="waCompanyField" style="display:none">
+          <div class="wa-label-row">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
+            Nombre de la empresa
+          </div>
+          <input id="waCompanyName" class="wa-input" type="text" placeholder="Ej: Mi Negocio SAC" style="margin-bottom:10px"/>
+        </div>
+
+        <div class="wa-label-row">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 10.8 19.79 19.79 0 01.08 2.18 2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 7.09a16 16 0 006 6l.36-.36a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+          Celular del cliente
+        </div>
+        <div class="wa-prefix-wrap" style="margin-bottom:10px">
+          <div class="wa-prefix">&#127477;&#127466; +51</div>
+          <input id="waPhone" class="wa-input" type="tel" inputmode="numeric" maxlength="9" placeholder="987 654 321"/>
+        </div>
+      </div>
+
+      <button class="btn-wa" id="waBtn" type="button" disabled onclick="sendWhatsApp()">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M11.999 0C5.373 0 0 5.373 0 12c0 2.117.554 4.103 1.523 5.824L.057 23.272a.75.75 0 00.916.916l5.559-1.463A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.626 0 11.999 0zm0 21.818a9.818 9.818 0 01-5.006-1.371l-.36-.214-3.722.979.996-3.634-.235-.374A9.818 9.818 0 012.182 12C2.182 6.57 6.57 2.182 12 2.182c5.43 0 9.818 4.388 9.818 9.818 0 5.43-4.389 9.818-9.819 9.818z"/></svg>
+        Enviar por WhatsApp
+      </button>
+
+      <button class="btn-rst" id="rstBtn">Limpiar campos</button>
+      <p class="formula-note">PMT por bisección · Interés = Saldo × [(1+TEA)^(días/360)−1] · Ajuste días hábiles</p>
+    </div>
+  </aside>
+
+  <!-- ── RIGHT PANEL ── -->
+  <main class="rp" id="rp">
+    <div class="empty">
+      <div class="empty-icon-wrap">
+        <svg viewBox="0 0 24 24"><path d="M9 7H6a2 2 0 00-2 2v9a2 2 0 002 2h12a2 2 0 002-2V9a2 2 0 00-2-2h-3"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>
+      </div>
+      <h2>Listo para simular</h2>
+      <p>Completa los datos a la izquierda y presiona <strong>Calcular cronograma</strong> para ver tu plan de pagos.</p>
+    </div>
+  </main>
+</div>
+
+<script>
+var $ = function(id){ return document.getElementById(id); };
+var _lastSim = null;
+var _gen = 'M';
+var waEmpOn = false;
+var LS_KEY = 'bbvaPrestamoSimV1';
+
+function saveFormDraft(){
+  try{
+    localStorage.setItem(LS_KEY, JSON.stringify({
+      amount: $('amount').value,
+      tea: $('tea').value,
+      months: $('months').value,
+      appDate: $('appDate').value,
+      dueDay: $('dueDay').value,
+      dsgOn: dsgOn,
+      gen: _gen,
+      waClientName: $('waClientName').value,
+      waPhone: $('waPhone').value,
+      waCompanyName: $('waCompanyName').value,
+      waEmpOn: waEmpOn
+    }));
+  }catch(err){}
+}
+
+function loadFormDraft(){
+  try{
+    var raw = localStorage.getItem(LS_KEY);
+    if(!raw) return false;
+    var d = JSON.parse(raw);
+    $('amount').value = d.amount || '';
+    $('tea').value = d.tea || '';
+    $('months').value = d.months || '';
+    $('appDate').value = d.appDate || '';
+    $('dueDay').value = d.dueDay || '';
+    setDsgState(!!d.dsgOn);
+    setGen(d.gen === 'F' ? 'F' : 'M');
+    $('waClientName').value = d.waClientName || '';
+    $('waPhone').value = d.waPhone || '';
+    setWaEmpState(!!d.waEmpOn);
+    $('waCompanyName').value = d.waCompanyName || '';
+    return true;
+  }catch(err){ return false; }
+}
+
+function setDsgState(wantOn){
+  wantOn = !!wantOn;
+  if(wantOn !== dsgOn) toggleDsg();
+}
+
+function setWaEmpState(wantOn){
+  wantOn = !!wantOn;
+  if(wantOn !== waEmpOn) toggleWaEmp();
+}
+
+function toggleWaEmp(){
+  waEmpOn = !waEmpOn;
+  var toggle = $('waEmpToggle');
+  var icon = $('waEmpCheckIcon');
+  var field = $('waCompanyField');
+  if(waEmpOn){
+    toggle.classList.add('active');
+    icon.style.display = 'block';
+    field.style.display = 'block';
+  } else {
+    toggle.classList.remove('active');
+    icon.style.display = 'none';
+    field.style.display = 'none';
+    $('waCompanyName').value = '';
+  }
+  saveFormDraft();
+}
+function setGen(g){
+  _gen = g;
+  $('genM').style.background = g==='M' ? 'var(--blue)' : 'white';
+  $('genM').style.color      = g==='M' ? 'white' : 'var(--text-3)';
+  $('genF').style.background = g==='F' ? 'var(--blue)' : 'white';
+  $('genF').style.color      = g==='F' ? 'white' : 'var(--text-3)';
+  saveFormDraft();
+}
+
+// ── Amount field: format with commas ──
+function formatAmountInput(e){
+  var el=e.target;
+  var raw=el.value.replace(/[^0-9.]/g,'');
+  // allow only one dot
+  var parts=raw.split('.');
+  var intPart=parts[0].replace(/\B(?=(\d{3})+(?!\d))/g,',');
+  el.value=parts.length>1?intPart+'.'+parts[1]:intPart;
+  saveFormDraft();
+}
+function getAmountValue(){
+  return parseFloat(($('amount').value||'').replace(/,/g,''))||0;
+}
+
+// ── Formatters ──
+var _cf = new Intl.NumberFormat('es-PE',{style:'currency',currency:'PEN',minimumFractionDigits:2,maximumFractionDigits:2});
+var _pf4 = new Intl.NumberFormat('es-PE',{minimumFractionDigits:2,maximumFractionDigits:4});
+function fC(v){ return _cf.format(v); }
+function fCN(v){ return _cf.format(v).replace(/S\/[\s\u00a0]?/,'').trim(); }
+function fP4(v){ return _pf4.format(v); }
+function fDate(d){ return new Intl.DateTimeFormat('es-PE',{day:'2-digit',month:'2-digit',year:'numeric'}).format(d); }
+function fDateShort(d){ return new Intl.DateTimeFormat('es-PE',{day:'2-digit',month:'short',year:'numeric'}).format(d); }
+function r2(v){ return Math.round((v+Number.EPSILON)*100)/100; }
+
+function setToday(){
+  var n=new Date();
+  $('appDate').value=n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0');
+  $('dueDay').value=String(n.getDate());
+}
+
+function syncDueDayFromAppDate(){
+  var v=$('appDate').value;
+  if(!v) return;
+  var d=new Date(v+'T12:00:00');
+  if(!isNaN(d.getTime())) $('dueDay').value=String(d.getDate());
+  saveFormDraft();
+}
+
+// ── Build due date (BBVA logic: JS overflow + skip weekends) ──
+function buildDue(base,n,day){
+  var d=new Date(base+'T00:00:00');
+  d.setMonth(d.getMonth()+n, day);
+  var dow=d.getDay();
+  if(dow===6) d.setDate(d.getDate()+2);
+  if(dow===0) d.setDate(d.getDate()+1);
+  return d;
+}
+
+// ── PMT exacto por bisección (días reales, base 360) ──
+// insRate = tasa mensual % del seguro (ej: 0.069). Si 0, sin seguro.
+// Seguro = saldo * (insRate/100) * (dias/30) — incluido dentro del PMT
+function exactPMT(amount,tea,daysList,insRate){
+  insRate=insRate||0;
+  function residual(pmt){
+    var b=amount;
+    for(var i=0;i<daysList.length;i++){
+      var interest=b*(Math.pow(1+tea/100,daysList[i]/360)-1);
+      var ins=b*(insRate/100)*(daysList[i]/30);
+      b=b-(pmt-interest-ins);
+    }
+    return b;
+  }
+  var lo=amount/daysList.length, hi=amount*3;
+  for(var i=0;i<300;i++){
+    var mid=(lo+hi)/2;
+    residual(mid)>0?lo=mid:hi=mid;
+  }
+  return (lo+hi)/2;
+}
+
+// ── TCEA por bisección ──
+function calcTCEA(amount,pmts){
+  var lo=0,hi=2;
+  function npv(r){
+    var v=-amount;
+    for(var i=0;i<pmts.length;i++) v+=pmts[i].a/Math.pow(1+r,pmts[i].d/360);
+    return v;
+  }
+  for(var i=0;i<150;i++){
+    var mid=(lo+hi)/2;
+    npv(mid)>0?lo=mid:hi=mid;
+  }
+  return ((lo+hi)/2)*100;
+}
+
+// ── Desgravamen toggle (fecha nacimiento titular asumida 20/01/1995 si aplica normativa; sin campo en formulario) ──
+var dsgOn=false;
+function toggleDsg(){
+  dsgOn=!dsgOn;
+  var toggle=$('dsgToggle');
+  var icon=$('dsgCheckIcon');
+  var badge=$('dsgBadge');
+  if(dsgOn){
+    toggle.classList.add('active');
+    icon.style.display='block';
+    badge.textContent='Activo';
+  } else {
+    toggle.classList.remove('active');
+    icon.style.display='none';
+    badge.textContent='Inactivo';
+  }
+  saveFormDraft();
+}
+
+// ── Simulate ──
+function simulate(){
+  var amount = getAmountValue();
+  var tea    = parseFloat($('tea').value);
+  var months = parseInt($('months').value,10);
+  var dday   = parseInt($('dueDay').value,10);
+  var base   = $('appDate').value;
+  var fee    = 0;
+  var dsgActive = $('dsgToggle').classList.contains('active');
+  var DSG_RATE = 0.069; // % mensual sobre saldo, base 30 dias
+
+  if(!amount||amount<=0||!tea||tea<=0||!months||months<=0||!dday||!base){
+    alert('Por favor completa todos los campos obligatorios.');
+    return;
+  }
+
+  var appObj=new Date(base+'T00:00:00');
+
+  // REGLA BBVA: si el dueDay < dia de solicitud, la primera cuota
+  // cae en el mes 2 (período doble inicial) y el total de cuotas = months-1
+  var appDay=appObj.getDate();
+  var startN = dday < appDay ? 2 : 1;
+  var totalCuotas = months - (dday < appDay ? 1 : 0);
+
+  var dates=[], daysList=[];
+  for(var n=startN;n<=startN+totalCuotas-1;n++) dates.push(buildDue(base,n,dday));
+  for(var i=0;i<dates.length;i++){
+    var prev=i===0?appObj:dates[i-1];
+    daysList.push(Math.round((dates[i]-prev)/86400000));
+  }
+
+  var pmt=exactPMT(amount,tea,daysList,dsgActive?DSG_RATE:0);
+  var bal=amount, totInt=0, totPaid=0, sched=[], pmts=[];
+
+  for(var i=0;i<totalCuotas;i++){
+    var intv=r2(bal*(Math.pow(1+tea/100,daysList[i]/360)-1));
+    var insv=dsgActive?r2(bal*(DSG_RATE/100)*(daysList[i]/30)):0;
+    var prin=i===totalCuotas-1?r2(bal):r2(pmt-intv-insv);
+    var instVal=r2(prin+intv+insv);
+    var total=r2(instVal+fee);
+    bal=r2(bal-prin); if(bal<0)bal=0;
+    totInt=r2(totInt+intv);
+    totPaid=r2(totPaid+total);
+    var dApp=Math.round((dates[i]-appObj)/86400000);
+    pmts.push({a:total,d:dApp});
+    sched.push({n:i+1,date:dates[i],days:daysList[i],total:total,instVal:instVal,int:intv,prin:prin,fee:fee,ins:insv,bal:bal});
+  }
+
+  var tcea=calcTCEA(amount,pmts);
+  var maturity=dates[dates.length-1];
+  var cuotaDisplay=r2(pmt+fee);
+  var stmtLabel='Sin envío de estado de cuenta físico';
+
+  render({amount:amount,tea:tea,tcea:tcea,months:totalCuotas,maturity:maturity,
+    totInt:totInt,totPaid:totPaid,pmt:r2(pmt),cuotaDisplay:cuotaDisplay,
+    fee:fee,dsgActive:dsgActive,stmtLabel:stmtLabel,sched:sched});
+
+  // Save for WhatsApp
+  _lastSim = {amount:amount,tea:tea,tcea:tcea,months:totalCuotas,maturity:maturity,
+    totInt:totInt,totPaid:totPaid,cuotaDisplay:cuotaDisplay,
+    fee:fee,dsgActive:dsgActive,stmtLabel:stmtLabel,sched:sched};
+  $('waBtn').disabled = false;
+}
+
+// ── Render ──
+function render(d){
+  var rows='';
+  for(var i=0;i<d.sched.length;i++){
+    var r=d.sched[i];
+    var isLast=i===d.sched.length-1;
+    var badge=isLast?'<span class="final-pill">Última</span>':'';
+    var comSeg=r2(d.dsgActive?r.ins:0);
+    var comSegCell=comSeg>0
+      ?'<td style="color:var(--text-3)">'+fC(comSeg)+'</td>'
+      :'<td><span class="null-cell">—</span></td>';
+    rows+='<tr>'+
+      '<td>'+r.n+'</td>'+
+      '<td>'+fDate(r.date)+badge+'</td>'+
+      '<td style="color:var(--text-3)">'+r.days+'</td>'+
+      '<td>'+fC(r.prin)+'</td>'+
+      '<td class="t-int">'+fC(r.int)+'</td>'+
+      comSegCell+
+      '<td class="t-total">'+fC(r.total)+'</td>'+
+      '<td class="t-bal">'+fC(r.bal)+'</td>'+
+      '</tr>';
+  }
+
+  $('rp').innerHTML=
+    // HERO
+    '<div class="result-hero anim">'+
+      '<div class="rh-label">Cuota mensual estimada</div>'+
+      '<div class="rh-cuota">'+
+        '<span class="rh-sym">S/</span>'+
+        '<span class="rh-amt">'+fCN(d.cuotaDisplay)+'</span>'+
+        '<span class="rh-freq">/ mes</span>'+
+      '</div>'+
+      '<div class="rh-tag">'+
+        (d.dsgActive
+          ? '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg> Incluye desgravamen · 0.069% mensual sobre saldo'
+          : '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg> Sin seguro de desgravamen')+
+      '</div>'+
+      '<div class="stat-grid">'+
+        '<div class="stat-card"><div class="stat-k">Plazo total</div><div class="stat-v">'+d.months+' meses</div></div>'+
+        '<div class="stat-card"><div class="stat-k">TEA</div><div class="stat-v">'+fP4(d.tea)+'%</div></div>'+
+        '<div class="stat-card"><div class="stat-k">TCEA estimada</div><div class="stat-v accent">'+fP4(d.tcea)+'%</div></div>'+
+        '<div class="stat-card"><div class="stat-k">Último pago</div><div class="stat-v">'+fDateShort(d.maturity)+'</div></div>'+
+      '</div>'+
+    '</div>'+
+
+    // SUMMARY STRIP
+    '<div class="summary-strip anim anim-d1">'+
+      '<div class="sum-item">'+
+        '<div class="sum-icon si-blue" style="font-size:22px;font-weight:700;color:var(--blue)">S/</div>'+
+        '<div><div class="sum-k">Capital financiado</div><div class="sum-v">'+fC(d.amount)+'</div></div>'+
+      '</div>'+
+      '<div class="sum-item">'+
+        '<div class="sum-icon si-gold"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#b08500" stroke-width="2" stroke-linecap="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div>'+
+        '<div><div class="sum-k">Total en intereses</div><div class="sum-v">'+fC(d.totInt)+'</div></div>'+
+      '</div>'+
+      '<div class="sum-item">'+
+        '<div class="sum-icon si-navy"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2" stroke-linecap="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></div>'+
+        '<div><div class="sum-k">Total a pagar</div><div class="sum-v">'+fC(d.totPaid)+'</div></div>'+
+      '</div>'+
+    '</div>'+
+
+    // TABLE
+    '<div class="table-wrap anim anim-d2">'+
+      '<div class="table-header">'+
+        '<span class="table-title">Plan de pagos detallado</span>'+
+        '<span class="table-sub">'+d.months+' cuotas &nbsp;·&nbsp; '+d.stmtLabel+'</span>'+
+      '</div>'+
+      '<table>'+
+        '<thead><tr>'+
+          '<th>N° DE CUOTA</th>'+
+          '<th>FECHA DE PAGO</th>'+
+          '<th>DÍAS</th>'+
+          '<th>AMORTIZACIÓN</th>'+
+          '<th>INTERÉS</th>'+
+          '<th>COMISIONES + SEGUROS</th>'+
+          '<th>CUOTA TOTAL</th>'+
+          '<th>SALDO CAPITAL</th>'+
+        '</tr></thead>'+
+        '<tbody>'+rows+'</tbody>'+
+      '</table>'+
+      '<div class="disclaimer anim anim-d3">'+
+        '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'+
+        '<p>Resultados con carácter referencial. PMT calculado por bisección con días exactos entre fechas de pago. '+
+        'Interés = Saldo × [(1+TEA)^(días/360)−1]. Las fechas se ajustan al siguiente lunes hábil si caen en sábado o domingo. '+
+        'TCEA estimada con flujos reales incluyendo comisiones. No incluye ITF.</p>'+
+      '</div>'+
+    '</div>';
+}
+
+function resetForm(){
+  try{ localStorage.removeItem(LS_KEY); }catch(err){}
+  ['tea','months','dueDay'].forEach(function(id){$(id).value='';}); $('amount').value='';
+  if(dsgOn) toggleDsg(); // reset desgravamen
+  setToday();
+  $('waClientName').value='';
+  $('waPhone').value='';
+  if(waEmpOn) toggleWaEmp();
+  $('waCompanyName').value='';
+  setGen('M');
+  $('rp').innerHTML=
+    '<div class="empty">'+
+    '<div class="empty-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="1.5" stroke-linecap="round"><path d="M9 7H6a2 2 0 00-2 2v9a2 2 0 002 2h12a2 2 0 002-2V9a2 2 0 00-2-2h-3"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg></div>'+
+    '<h2>Listo para simular</h2>'+
+    '<p>Completa los datos a la izquierda y presiona <strong>Calcular cronograma</strong> para ver tu plan de pagos.</p>'+
+    '</div>';
+  _lastSim = null;
+  $('waBtn').disabled = true;
+}
+
+function sendWhatsApp(){
+  var phone    = ($('waPhone').value||'').replace(/\D/g,'');
+  var cliente  = ($('waClientName').value||'').trim();
+  var empresa  = ($('waCompanyName').value||'').trim();
+
+  if(!cliente){ alert('Ingresa el nombre del cliente.'); $('waClientName').focus(); return; }
+  if(waEmpOn && !empresa){ alert('Ingresa el nombre de la empresa.'); $('waCompanyName').focus(); return; }
+  if(!phone || phone.length < 9){ alert('Ingresa el numero de celular del cliente (9 digitos).'); $('waPhone').focus(); return; }
+  if(!_lastSim){ alert('Primero calcula el cronograma.'); return; }
+
+  var d      = _lastSim;
+  var cuota  = 'S/ ' + fCN(d.cuotaDisplay);
+  var capital = fC(d.amount);
+  var tea    = fP4(d.tea) + '%';
+  var meses  = d.months;
+  var totPaid = fC(d.totPaid);
+
+  // Capitalize first letter of each word
+  function toTitleCase(str){
+    return str.toLowerCase().replace(/\b\w/g, function(c){ return c.toUpperCase(); });
+  }
+  var primerNombre = toTitleCase(cliente.split(' ')[0]);
+  var asesorFmt   = toTitleCase('Victor Quevedo');
+
+  var sep = '\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501';
+
+  var introNeg =
+    '_Le saluda ' + asesorFmt + ', asesor de negocios del banco BBVA. Me comunico con usted para presentarle una propuesta de financiamiento para su ' +
+    (waEmpOn ? 'empresa *' + empresa.toUpperCase() + '*' : 'negocio') + '._';
+
+  var msg =
+    '_Se\u00f1or' + (_gen==='F'?'a':'') + '_ _*' + primerNombre + '*_, _buen d\u00eda._\n\n' +
+    introNeg + '\n\n' +
+    '*Simulaci\u00f3n de Pr\u00e9stamo Comercial BBVA*\n' +
+    sep + '\n' +
+    '*Capital financiado:* ' + capital + '\n' +
+    '*Cuota mensual:* ' + cuota + '\n' +
+    '*Plazo:* ' + meses + ' meses\n' +
+    '*TEA:* ' + tea + '\n' +
+    '*Total a pagar:* ' + totPaid + '\n';
+  msg += sep + '\n' +
+    '_Quedo a su disposici\u00f3n para acompa\u00f1arlo en todo el proceso._\n\n' +
+    '_Saludos cordiales,_\n' +
+    '_' + asesorFmt + '_';
+
+  window.open('https://web.whatsapp.com/send?phone=51' + phone + '&text=' + encodeURIComponent(msg), '_blank');
+}
+
+$('simBtn').addEventListener('click', simulate);
+$('rstBtn').addEventListener('click', resetForm);
+$('amount').addEventListener('input', formatAmountInput);
+// Enforce TEA max 99
+$('tea').addEventListener('input', function(){
+  if(parseFloat(this.value)>99) this.value=99;
+  saveFormDraft();
+});
+
+// Enforce months max 180
+$('months').addEventListener('input', function(){
+  if(parseInt(this.value,10)>180) this.value=180;
+  saveFormDraft();
+});
+
+$('dueDay').addEventListener('input', saveFormDraft);
+$('waClientName').addEventListener('input', saveFormDraft);
+$('waPhone').addEventListener('input', saveFormDraft);
+$('waCompanyName').addEventListener('input', saveFormDraft);
+
+document.addEventListener('keydown', function(e){
+  if(e.key !== 'Escape') return;
+  e.preventDefault();
+  resetForm();
+});
+
+if(!loadFormDraft()) setToday();
+$('appDate').addEventListener('change', syncDueDayFromAppDate);
+</script>
+</body>
+</html>
