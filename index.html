@@ -1027,8 +1027,11 @@ function simulate(){
   var tea    = parseFloat($('tea').value);
   var months = parseInt($('months').value,10);
   var dday   = parseInt($('dueDay').value,10);
-  var base   = getTodayISO();
-  $('appDate').value = base; // Siempre usar fecha de solicitud del dia de simulacion
+  var base   = ($('appDate').value||'').trim();
+  if(!base){
+    base = getTodayISO();
+    $('appDate').value = base;
+  }
   var fee    = 0;
   var dsgActive = $('dsgToggle').classList.contains('active');
   var tceaCalibMode = $('tceaCalibMode') && $('tceaCalibMode').checked;
