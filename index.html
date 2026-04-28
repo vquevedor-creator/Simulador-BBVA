@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>Simulador Préstamo Comercial</title>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <style>
 :root{
   --navy:#04213f;
@@ -201,6 +203,48 @@ header{
 .btn-wa svg{width:17px;height:17px;fill:white}
 .btn-wa:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
 
+.copy-box{margin-top:10px}
+.copy-box label{
+  display:block;
+  font-size:11px;
+  font-weight:600;
+  color:var(--text-2);
+  margin-bottom:6px;
+}
+.copy-box textarea{
+  width:100%;
+  min-height:140px;
+  border:1.5px solid var(--border);
+  border-radius:var(--r-sm);
+  padding:10px 12px;
+  resize:vertical;
+  font-family:'Outfit',sans-serif;
+  font-size:12px;
+  line-height:1.4;
+  color:var(--text);
+  background:#fbfdff;
+  outline:none;
+}
+.copy-box textarea:focus{
+  border-color:var(--blue);
+  box-shadow:0 0 0 3px rgba(0,68,129,.10);
+}
+.btn-copy{
+  width:100%;
+  height:34px;
+  margin-top:8px;
+  background:transparent;
+  color:var(--text-2);
+  border:1.5px solid var(--border);
+  border-radius:var(--r-sm);
+  font-family:'Outfit',sans-serif;
+  font-size:12px;
+  font-weight:600;
+  cursor:pointer;
+  transition:all .18s;
+}
+.btn-copy:hover{border-color:var(--blue);color:var(--blue)}
+
 .dsg-toggle{
   display:flex;align-items:center;gap:10px;
   padding:10px 12px;
@@ -322,6 +366,13 @@ header{
 }
 .table-title{font-size:14px;font-weight:700;color:var(--text)}
 .table-sub{font-size:12px;color:var(--text-3);font-weight:400}
+
+.reprice-wrap{background:#f8fafc;border-top:2px solid var(--blue-light)}
+.reprice-wrap .table-header{background:#eef4fc}
+.reprice-hint{
+  font-size:10.5px;color:var(--text-3);line-height:1.45;
+  margin:0 0 10px;padding:0 2px;
+}
 
 table{width:100%;border-collapse:collapse;font-size:13px}
 thead th{
@@ -495,6 +546,36 @@ tbody tr:last-child td{border-bottom:none;background:rgba(0,68,129,.03)}
           <span class="dsg-badge" id="dsgBadge">Inactivo</span>
         </div>
       </div>
+
+      <div class="field">
+        <div class="dsg-toggle wa-emp-toggle" id="rateChToggle" onclick="toggleRateChange()">
+          <div class="dsg-check" id="rateChCheck">
+            <svg id="rateChCheckIcon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="display:none"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div class="dsg-info">
+            <span class="dsg-label">Cambio de tasa tras desembolso</span>
+            <span class="dsg-sub">Nueva TEA y fecha: segundo cronograma referencial (mismo motor de cuotas)</span>
+          </div>
+        </div>
+      </div>
+      <div id="repriceFields" style="display:none">
+        <div class="row2">
+          <div class="field">
+            <label>Nueva TEA (%)</label>
+            <div class="input-wrap">
+              <input id="repriceTea" type="number" class="has-sfx" min="0.01" max="99" step="0.01" placeholder="18.67"/>
+              <span class="input-sfx">%</span>
+            </div>
+          </div>
+          <div class="field">
+            <label>Fecha de aplicación del cambio</label>
+            <div class="input-wrap">
+              <input id="repriceDate" type="date"/>
+            </div>
+          </div>
+        </div>
+        <p class="reprice-hint">Se usa el saldo capital <strong>antes</strong> de la primera cuota con vencimiento en esa fecha o después; las cuotas restantes se recalculan con la nueva TEA (interés = saldo × [(1+TEA)^(días/360)−1], misma regla de días que el plan inicial). Cifras referenciales respecto al banco.</p>
+      </div>
     </div>
 
     <div class="lp-footer">
@@ -549,6 +630,27 @@ tbody tr:last-child td{border-bottom:none;background:rgba(0,68,129,.03)}
         Enviar por WhatsApp
       </button>
 
+      <div class="copy-box">
+        <label for="copySummary">Resumen para copiar</label>
+        <textarea id="copySummary" readonly placeholder="Primero calcula el cronograma para generar el texto..."></textarea>
+        <button class="btn-copy" id="copyBtn" type="button" onclick="copySummaryText()">Copiar resumen</button>
+      </div>
+
+      <button class="btn-rst" id="pdfPcomBtn" type="button" disabled onclick="downloadPDFPcomFormat()">
+        Descargar PDF formato adjunto
+      </button>
+
+      <button class="btn-rst" id="pcomBtn" type="button" onclick="loadPcomTemplate()">
+        Cargar simulador exacto (PCOM PDF)
+      </button>
+
+      <div class="field" style="margin-bottom:0">
+        <label class="phys-check-wrap">
+          <input type="checkbox" id="tceaCalibMode"/>
+          <span class="phys-check-label">Modo calibración TCEA por tramo de monto</span>
+        </label>
+      </div>
+
       <button class="btn-rst" id="rstBtn">Limpiar campos</button>
       <p class="formula-note">PMT por bisección · Interés = Saldo × [(1+TEA)^(días/360)−1] · Ajuste días hábiles</p>
     </div>
@@ -571,7 +673,44 @@ var $ = function(id){ return document.getElementById(id); };
 var _lastSim = null;
 var _gen = 'M';
 var waEmpOn = false;
+var rateChangeOn = false;
 var LS_KEY = 'bbvaPrestamoSimV1';
+
+function syncRateChangeUI(){
+  var toggle = $('rateChToggle');
+  var icon = $('rateChCheckIcon');
+  var field = $('repriceFields');
+  if(rateChangeOn){
+    toggle.classList.add('active');
+    icon.style.display = 'block';
+    field.style.display = 'block';
+  } else {
+    toggle.classList.remove('active');
+    icon.style.display = 'none';
+    field.style.display = 'none';
+  }
+}
+
+function toggleRateChange(){
+  rateChangeOn = !rateChangeOn;
+  if(!rateChangeOn){
+    $('repriceTea').value = '';
+    $('repriceDate').value = '';
+  }
+  syncRateChangeUI();
+  saveFormDraft();
+}
+
+function setRateChangeState(wantOn){
+  wantOn = !!wantOn;
+  if(wantOn === rateChangeOn) return;
+  rateChangeOn = wantOn;
+  if(!rateChangeOn){
+    $('repriceTea').value = '';
+    $('repriceDate').value = '';
+  }
+  syncRateChangeUI();
+}
 
 function saveFormDraft(){
   try{
@@ -586,7 +725,10 @@ function saveFormDraft(){
       waClientName: $('waClientName').value,
       waPhone: $('waPhone').value,
       waCompanyName: $('waCompanyName').value,
-      waEmpOn: waEmpOn
+      waEmpOn: waEmpOn,
+      rateChangeOn: rateChangeOn,
+      repriceTea: $('repriceTea').value,
+      repriceDate: $('repriceDate').value
     }));
   }catch(err){}
 }
@@ -607,6 +749,10 @@ function loadFormDraft(){
     $('waPhone').value = d.waPhone || '';
     setWaEmpState(!!d.waEmpOn);
     $('waCompanyName').value = d.waCompanyName || '';
+    rateChangeOn = !!d.rateChangeOn;
+    $('repriceTea').value = d.repriceTea || '';
+    $('repriceDate').value = d.repriceDate || '';
+    syncRateChangeUI();
     return true;
   }catch(err){ return false; }
 }
@@ -664,12 +810,47 @@ function getAmountValue(){
 // ── Formatters ──
 var _cf = new Intl.NumberFormat('es-PE',{style:'currency',currency:'PEN',minimumFractionDigits:2,maximumFractionDigits:2});
 var _pf4 = new Intl.NumberFormat('es-PE',{minimumFractionDigits:2,maximumFractionDigits:4});
+var _pf6 = new Intl.NumberFormat('es-PE',{minimumFractionDigits:4,maximumFractionDigits:4});
 function fC(v){ return _cf.format(v); }
 function fCN(v){ return _cf.format(v).replace(/S\/[\s\u00a0]?/,'').trim(); }
 function fP4(v){ return _pf4.format(v); }
+function fP6(v){ return _pf6.format(v); }
 function fDate(d){ return new Intl.DateTimeFormat('es-PE',{day:'2-digit',month:'2-digit',year:'numeric'}).format(d); }
 function fDateShort(d){ return new Intl.DateTimeFormat('es-PE',{day:'2-digit',month:'short',year:'numeric'}).format(d); }
 function r2(v){ return Math.round((v+Number.EPSILON)*100)/100; }
+function buildCopySummary(d){
+  var sep = '\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501';
+  return [
+    '*Simulacion de Prestamo Comercial BBVA*',
+    sep,
+    '*Capital financiado*: ' + fC(d.amount),
+    '*Cuota mensual*: S/ ' + fCN(d.cuotaDisplay),
+    '*Plazo*: ' + d.months + ' meses',
+    '*TEA*: ' + fP4(d.tea) + '%',
+    '*Total a pagar*: ' + fC(d.totPaid)
+  ].join('\n');
+}
+function copySummaryText(){
+  var ta = $('copySummary');
+  var txt = (ta.value||'').trim();
+  if(!txt){
+    alert('Primero calcula el cronograma para generar el resumen.');
+    return;
+  }
+  ta.focus();
+  ta.select();
+  if(navigator.clipboard && window.isSecureContext){
+    navigator.clipboard.writeText(txt).then(function(){
+      alert('Resumen copiado.');
+    }).catch(function(){
+      document.execCommand('copy');
+      alert('Resumen copiado.');
+    });
+    return;
+  }
+  document.execCommand('copy');
+  alert('Resumen copiado.');
+}
 
 function setToday(){
   var n=new Date();
@@ -693,6 +874,14 @@ function buildDue(base,n,day){
   if(dow===6) d.setDate(d.getDate()+2);
   if(dow===0) d.setDate(d.getDate()+1);
   return d;
+}
+
+function startOfDay(t){
+  return new Date(t.getFullYear(), t.getMonth(), t.getDate());
+}
+
+function cmpDay(a,b){
+  return startOfDay(a).getTime() - startOfDay(b).getTime();
 }
 
 // ── PMT exacto por bisección (días reales, base 360) ──
@@ -732,6 +921,20 @@ function calcTCEA(amount,pmts){
   return ((lo+hi)/2)*100;
 }
 
+// ── Calibración visual de TCEA (opcional) ──
+// Ajusta solo la presentación para igualar el simulador BBVA por tramos.
+// No altera cuota, cronograma, intereses ni saldo.
+function getTceaCalibrationDelta(amount){
+  var table = [
+    {min:0, max:250000, delta:0.000001},
+    {min:250000.01, max:400000, delta:-0.000005}
+  ];
+  for(var i=0;i<table.length;i++){
+    if(amount>=table[i].min && amount<=table[i].max) return table[i].delta;
+  }
+  return 0;
+}
+
 // ── Desgravamen toggle (fecha nacimiento titular asumida 20/01/1995 si aplica normativa; sin campo en formulario) ──
 var dsgOn=false;
 function toggleDsg(){
@@ -760,11 +963,21 @@ function simulate(){
   var base   = $('appDate').value;
   var fee    = 0;
   var dsgActive = $('dsgToggle').classList.contains('active');
+  var tceaCalibMode = $('tceaCalibMode') && $('tceaCalibMode').checked;
   var DSG_RATE = 0.069; // % mensual sobre saldo, base 30 dias
 
   if(!amount||amount<=0||!tea||tea<=0||!months||months<=0||!dday||!base){
     alert('Por favor completa todos los campos obligatorios.');
     return;
+  }
+
+  if(rateChangeOn){
+    var rd0 = ($('repriceDate').value||'').trim();
+    var teaN0 = parseFloat(($('repriceTea').value||'').replace(',','.'));
+    if(!rd0 || !teaN0 || teaN0<=0){
+      alert('Completa nueva TEA y fecha de aplicación del cambio, o desactiva «Cambio de tasa».');
+      return;
+    }
   }
 
   var appObj=new Date(base+'T00:00:00');
@@ -799,20 +1012,83 @@ function simulate(){
     sched.push({n:i+1,date:dates[i],days:daysList[i],total:total,instVal:instVal,int:intv,prin:prin,fee:fee,ins:insv,bal:bal});
   }
 
-  var tcea=calcTCEA(amount,pmts);
+  var tceaRaw=calcTCEA(amount,pmts);
+  var tcea=tceaRaw + (tceaCalibMode ? getTceaCalibrationDelta(amount) : 0);
   var maturity=dates[dates.length-1];
   var cuotaDisplay=r2(pmt+fee);
   var stmtLabel='Sin envío de estado de cuenta físico';
 
+  var reprice = null;
+  if(rateChangeOn){
+    var rd = ($('repriceDate').value||'').trim();
+    var teaN = parseFloat(($('repriceTea').value||'').replace(',','.'));
+    var chD = new Date(rd+'T12:00:00');
+    if(cmpDay(chD, appObj)<0){
+      alert('La fecha de aplicación no puede ser anterior a la fecha de solicitud.');
+      return;
+    }
+    if(cmpDay(chD, dates[dates.length-1])>0){
+      alert('La fecha de aplicación debe ser anterior o igual al vencimiento de la última cuota.');
+      return;
+    }
+    var k = -1;
+    for(var ri=0;ri<dates.length;ri++){
+      if(cmpDay(dates[ri], chD) >= 0){ k = ri; break; }
+    }
+    if(k < 0){ k = dates.length; }
+    var openBal = (k===0) ? amount : sched[k-1].bal;
+    var rem = totalCuotas - k;
+    if(rem < 1){
+      alert('No hay cuotas posteriores a la fecha indicada.');
+      return;
+    }
+    var d2 = dates.slice(k);
+    var dl2 = daysList.slice(k);
+    var pmt2 = exactPMT(openBal, teaN, dl2, dsgActive ? DSG_RATE : 0);
+    var bal2 = openBal, sched2 = [];
+    for(var j=0;j<rem;j++){
+      var int2 = r2(bal2 * (Math.pow(1 + teaN / 100, dl2[j] / 360) - 1));
+      var ins2 = dsgActive ? r2(bal2 * (DSG_RATE / 100) * (dl2[j] / 30)) : 0;
+      var pr2 = (j === rem - 1) ? r2(bal2) : r2(pmt2 - int2 - ins2);
+      var inst2 = r2(pr2 + int2 + ins2);
+      var tot2 = r2(inst2 + fee);
+      bal2 = r2(bal2 - pr2);
+      if(bal2 < 0) bal2 = 0;
+      sched2.push({
+        n: k + 1 + j,
+        date: d2[j],
+        days: dl2[j],
+        total: tot2,
+        instVal: inst2,
+        int: int2,
+        prin: pr2,
+        fee: fee,
+        ins: ins2,
+        bal: bal2
+      });
+    }
+    reprice = {
+      teaNew: teaN,
+      repriceDate: rd,
+      openBal: openBal,
+      firstCuotaIdx: k + 1,
+      oldCuotaDisplay: cuotaDisplay,
+      newCuotaDisplay: r2(pmt2 + fee),
+      schedAfter: sched2
+    };
+  }
+
   render({amount:amount,tea:tea,tcea:tcea,months:totalCuotas,maturity:maturity,
     totInt:totInt,totPaid:totPaid,pmt:r2(pmt),cuotaDisplay:cuotaDisplay,
-    fee:fee,dsgActive:dsgActive,stmtLabel:stmtLabel,sched:sched});
+    fee:fee,dsgActive:dsgActive,stmtLabel:stmtLabel,sched:sched,reprice:reprice});
 
   // Save for WhatsApp
   _lastSim = {amount:amount,tea:tea,tcea:tcea,months:totalCuotas,maturity:maturity,
     totInt:totInt,totPaid:totPaid,cuotaDisplay:cuotaDisplay,
     fee:fee,dsgActive:dsgActive,stmtLabel:stmtLabel,sched:sched};
+  $('copySummary').value = buildCopySummary(_lastSim);
   $('waBtn').disabled = false;
+  $('pdfPcomBtn').disabled = false;
 }
 
 // ── Render ──
@@ -838,6 +1114,17 @@ function render(d){
       '</tr>';
   }
 
+  var rhReprice = '';
+  if(d.reprice){
+    var rp = d.reprice;
+    rhReprice =
+      '<div class="rh-tag" style="margin-top:-24px;margin-bottom:28px;background:rgba(232,185,0,.2);border-color:rgba(232,185,0,.35);color:#fff8dc">'+
+      '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg> '+
+      'Tras cambio TEA '+fP4(rp.teaNew)+'% desde '+fDateShort(new Date(rp.repriceDate+'T12:00:00'))+
+      ': cuota desde cuota '+rp.firstCuotaIdx+' ≈ S/ '+fCN(rp.newCuotaDisplay)+' (antes S/ '+fCN(rp.oldCuotaDisplay)+') · Saldo al cambio '+fC(rp.openBal)+
+      '</div>';
+  }
+
   $('rp').innerHTML=
     // HERO
     '<div class="result-hero anim">'+
@@ -847,6 +1134,7 @@ function render(d){
         '<span class="rh-amt">'+fCN(d.cuotaDisplay)+'</span>'+
         '<span class="rh-freq">/ mes</span>'+
       '</div>'+
+      rhReprice+
       '<div class="rh-tag">'+
         (d.dsgActive
           ? '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg> Incluye desgravamen · 0.069% mensual sobre saldo'
@@ -855,7 +1143,7 @@ function render(d){
       '<div class="stat-grid">'+
         '<div class="stat-card"><div class="stat-k">Plazo total</div><div class="stat-v">'+d.months+' meses</div></div>'+
         '<div class="stat-card"><div class="stat-k">TEA</div><div class="stat-v">'+fP4(d.tea)+'%</div></div>'+
-        '<div class="stat-card"><div class="stat-k">TCEA estimada</div><div class="stat-v accent">'+fP4(d.tcea)+'%</div></div>'+
+        '<div class="stat-card"><div class="stat-k">TCEA estimada</div><div class="stat-v accent">'+fP6(d.tcea)+'%</div></div>'+
         '<div class="stat-card"><div class="stat-k">Último pago</div><div class="stat-v">'+fDateShort(d.maturity)+'</div></div>'+
       '</div>'+
     '</div>'+
@@ -895,6 +1183,43 @@ function render(d){
         '</tr></thead>'+
         '<tbody>'+rows+'</tbody>'+
       '</table>'+
+      (d.reprice ? (function(){
+        var rp = d.reprice, rows2 = '';
+        for(var ii=0;ii<rp.schedAfter.length;ii++){
+          var r2r = rp.schedAfter[ii];
+          var last2 = ii === rp.schedAfter.length - 1;
+          var badge2 = last2 ? '<span class="final-pill">Última</span>' : '';
+          var com2 = r2(d.dsgActive ? r2r.ins : 0);
+          var comCell2 = com2 > 0
+            ? '<td style="color:var(--text-3)">'+fC(com2)+'</td>'
+            : '<td><span class="null-cell">—</span></td>';
+          rows2 += '<tr>'+
+            '<td>'+r2r.n+'</td>'+
+            '<td>'+fDate(r2r.date)+badge2+'</td>'+
+            '<td style="color:var(--text-3)">'+r2r.days+'</td>'+
+            '<td>'+fC(r2r.prin)+'</td>'+
+            '<td class="t-int">'+fC(r2r.int)+'</td>'+
+            comCell2+
+            '<td class="t-total">'+fC(r2r.total)+'</td>'+
+            '<td class="t-bal">'+fC(r2r.bal)+'</td>'+
+            '</tr>';
+        }
+        return '<div class="reprice-wrap anim anim-d2">'+
+          '<div class="table-header">'+
+            '<span class="table-title">Cronograma tras cambio de tasa (simulación)</span>'+
+            '<span class="table-sub">Cuotas '+rp.firstCuotaIdx+'–'+d.months+' · TEA nueva '+fP4(rp.teaNew)+'% · Cuota nivelada ≈ S/ '+fCN(rp.newCuotaDisplay)+'</span>'+
+          '</div>'+
+          '<table>'+
+            '<thead><tr>'+
+              '<th>N° DE CUOTA</th><th>FECHA DE PAGO</th><th>DÍAS</th><th>AMORTIZACIÓN</th><th>INTERÉS</th>'+
+              '<th>COMISIONES + SEGUROS</th><th>CUOTA TOTAL</th><th>SALDO CAPITAL</th>'+
+            '</tr></thead><tbody>'+rows2+'</tbody>'+
+          '</table>'+
+          '<div class="disclaimer anim anim-d3" style="margin:0 36px 20px">'+
+            '<p style="font-size:11px">Este tramo usa el mismo cálculo de interés y PMT que el cronograma inicial; el banco puede aplicar redondeos, ITF o fechas de valor distintas. Compare con su estado de cuenta oficial.</p>'+
+          '</div>'+
+        '</div>';
+      })() : '')+
       '<div class="disclaimer anim anim-d3">'+
         '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'+
         '<p>Resultados con carácter referencial. PMT calculado por bisección con días exactos entre fechas de pago. '+
@@ -913,6 +1238,8 @@ function resetForm(){
   $('waPhone').value='';
   if(waEmpOn) toggleWaEmp();
   $('waCompanyName').value='';
+  setRateChangeState(false);
+  if($('tceaCalibMode')) $('tceaCalibMode').checked = false;
   setGen('M');
   $('rp').innerHTML=
     '<div class="empty">'+
@@ -921,7 +1248,129 @@ function resetForm(){
     '<p>Completa los datos a la izquierda y presiona <strong>Calcular cronograma</strong> para ver tu plan de pagos.</p>'+
     '</div>';
   _lastSim = null;
+  $('copySummary').value = '';
   $('waBtn').disabled = true;
+  $('pdfPcomBtn').disabled = true;
+}
+
+function loadPcomTemplate(){
+  $('amount').value='198,000';
+  $('tea').value='19.00';
+  $('months').value='24';
+  $('appDate').value='2024-09-18';
+  $('dueDay').value='18';
+  if(dsgOn) toggleDsg(); // En el PDF PCOM no hay seguro ni comisiones
+  if($('tceaCalibMode')) $('tceaCalibMode').checked = false;
+  setRateChangeState(false);
+  simulate();
+}
+
+function downloadPDFPcomFormat(){
+  if(!_lastSim){ alert('Primero calcula el cronograma.'); return; }
+  var d = _lastSim;
+  var { jsPDF } = window.jspdf;
+  var doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+  var ML = 8;
+  var sep = '-'.repeat(124);
+  function num2(v){ return Number(Math.round((v+Number.EPSILON)*100)/100).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+  function num5(v){ return Number(v).toLocaleString('en-US',{minimumFractionDigits:5,maximumFractionDigits:5}); }
+  function num6(v){ return Number(v).toLocaleString('en-US',{minimumFractionDigits:6,maximumFractionDigits:6}); }
+  function dateCompact(dt){ var dd=String(dt.getDate()).padStart(2,'0'); var mm=String(dt.getMonth()+1).padStart(2,'0'); var yy=dt.getFullYear(); return dd+mm+yy; }
+  function dateSlashFromInput(v){ var p=v.split('-'); return p.length===3 ? (p[2]+'/'+p[1]+'/'+p[0]) : v; }
+  function padL(v,n){ return String(v).padStart(n,' '); }
+  function padR(v,n){ return String(v).padEnd(n,' '); }
+  function rowLine(r){
+    var comSeg = r2((d.physical ? r.fee : 0) + (d.dsgActive ? r.ins : 0));
+    return (
+      padL(String(r.n).padStart(3,'0'),4) + ' ' +
+      padR(dateCompact(r.date),9) + ' ' +
+      padL(num2(r.prin),11) + ' ' +
+      padL(num2(r.int),11) + ' ' +
+      padL(num2(comSeg),10) + ' ' +
+      padL('0.00',8) + ' ' +
+      padL(num2(r.total),10) + ' ' +
+      padL(num2(r.bal),11)
+    );
+  }
+
+  var nominal = ((Math.pow(1 + d.tea/100, 1/12) - 1) * 12 * 100);
+  var appDateVal = $('appDate').value || '';
+  var appDateText = appDateVal ? dateSlashFromInput(appDateVal) : '-';
+  var seguroTxt = 'INSOLUTO INDIV.';
+  var totalComSeg = d.sched.reduce(function(acc,r){ return r2(acc + r2((d.physical ? r.fee : 0) + (d.dsgActive ? r.ins : 0))); },0);
+
+  var lines = [];
+  var y = 10;
+  var xL = 6;
+  var xLV = 62;
+  var xR = 108;
+  var xRV = 202;
+  function t(x, yy, txt){ doc.text(String(txt||''), x, yy); }
+  function pair(yy, lLab, lVal, rLab, rVal){
+    t(xL, yy, lLab); t(xLV, yy, lVal);
+    if(rLab) t(xR, yy, rLab);
+    if(rVal!==undefined && rVal!=='') doc.text(String(rVal), xRV, yy, {align:'right'});
+  }
+  doc.setFont('courier','normal');
+  doc.setFontSize(12);
+  t(74, y, 'CRONOGRAMA PRELIMINAR DE PAGOS');
+  y += 5;
+  t(74, y, '----------------------------------------');
+  y += 7;
+  doc.setFontSize(10.2);
+  pair(y, 'TIPO OPERACION   :', '96', 'PRODUCTO   :', 'NATURAL>50M    - VS57'); y += 6;
+  pair(y, 'PRINCIPAL SOLICITADO :', num2(d.amount), 'CUOTA      :', num2(d.cuotaDisplay)); y += 6;
+  pair(y, 'TIPO INTERES NOMINAL :', num5(nominal) + ' %', 'TASA EFECTIVA ANUAL   :', num5(d.tea) + ' %'); y += 10;
+
+  pair(y, 'TCEA REFERENCIAL DE OPERACION:', num6(d.tcea) + '%', 'MONEDA : PEN: SOLES', ''); y += 6;
+  pair(y, 'DURACION TOTAL:', 'PL ' + d.months + ' MES   - 2024', 'VALOR COMERCIAL   :', '0.00'); y += 6;
+  pair(y, 'PERIODICIDAD PAGO EN CARENCIA :', '', 'TIPO DE BIEN:', ''); y += 6;
+  pair(y, 'INTERESES :', '-', 'DURACION CARENCIA :', '-'); y += 6;
+  pair(y, 'PERIODICIDAD PAGO EN AMORTIZACION :', '', '', ''); y += 6;
+  pair(y, 'INTERESES :', 'PERIOD MEN   - 201', 'PRINCIPAL :', 'PP 1 M    - 201'); y += 8;
+  pair(y, 'COMIS. ENVIO INFOR. PERIODICA :', '', 'DESGRAV:', 'SEGURO:'); y += 6;
+  pair(y, '', 'FECHA DE SOLICITUD : ' + appDateText, '', seguroTxt); y += 6;
+
+  lines.push('COMISION(ES)');
+  lines.push('NRO VENCTO. AMORTIZAC. INTERESES + SEGURO SUBVENC CUOTA SALDO');
+  lines.push(sep);
+  // Replica del preliminar original: mostrar cuotas 1-12, puntos, y ultima cuota.
+  var visibleTop = Math.min(12, d.sched.length);
+  for(var i=0;i<visibleTop;i++) lines.push(rowLine(d.sched[i]));
+  if(d.sched.length>13){
+    lines.push('. . . . . . .');
+    lines.push('. . . . . . .');
+    lines.push('. . . . . . .');
+    lines.push(rowLine(d.sched[d.sched.length-1]));
+  } else {
+    for(var j=visibleTop;j<d.sched.length;j++) lines.push(rowLine(d.sched[j]));
+  }
+  lines = lines.concat([
+    sep,
+    '  ' + padL(num2(d.amount),11) + '  ' + padL(num2(d.totInt),10) + '  ' + padL(num2(totalComSeg),8) + '  ' + padL('0.00',7) + '  ' + padL(num2(d.totPaid),10),
+    '- NO SE INCLUYEN LOS GASTOS PAGADOS DIRECTAMENTE POR EL CLIENTE.',
+    '- EL MONTO DE AMORTIZACION CON ESTE VALOR SE ORIGINA POR LA APLICACION DEL',
+    'CALCULO PARA LA OBTENCION DE CUOTA CONSTANTE. NO AFECTA EL COSTO EFECTIVO',
+    'ANUAL DEL CREDITO.',
+    '- EL PRESENTE ES UN CRONOGRAMA PRELIMINAR. EL CRONOGRAMA DEFINITIVO SERA ENTREGADO',
+    'EN UN PLAZO MAXIMO DE 30 DIAS DE ACUERDO A LA MODALIDAD ELEGIDA POR EL CLIENTE EN LA',
+    'SOLICITUD DEL PRESTAMO, Y FORMARA PARTE DEL CONTRATO. DICHO CRONOGRAMA DEBERA SER',
+    'FIRMADO POR LAS PARTES SALVO QUE LA MODALIDAD DE ENTREGA ELEGIDA NO LO EXIJA.',
+    '- USTED TIENE DERECHO A ELEGIR SU PROPIO SEGURO EN EL MOMENTO DE LA CONTRATACION.',
+    '- LAS OPERACIONES REALIZADAS EN LA CUENTA SE ENCUENTRAN AFECTAS AL PAGO DEL',
+    'IMPUESTO POR TRANSACCIONES FINANCIERAS (ITF): 0.005%.',
+    '_____________________',
+    'FIRMA DEL CLIENTE'
+  ]);
+
+  doc.setFont('courier','normal');
+  doc.setFontSize(8.6);
+  var yBody = y;
+  for(var ln=0; ln<lines.length; ln++){
+    t(ML, yBody, lines[ln]);
+    yBody += 4.2;
+  }
+  doc.save('Cronograma_Preliminar_Formato_Adjunto.pdf');
 }
 
 function sendWhatsApp(){
@@ -992,6 +1441,8 @@ $('dueDay').addEventListener('input', saveFormDraft);
 $('waClientName').addEventListener('input', saveFormDraft);
 $('waPhone').addEventListener('input', saveFormDraft);
 $('waCompanyName').addEventListener('input', saveFormDraft);
+$('repriceTea').addEventListener('input', saveFormDraft);
+$('repriceDate').addEventListener('change', saveFormDraft);
 
 document.addEventListener('keydown', function(e){
   if(e.key !== 'Escape') return;
